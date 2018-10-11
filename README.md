@@ -27,6 +27,8 @@ Running on a windows machine, I had to connect to the container at a specific IP
 ```
 python -m pytest
 ```
+* The tasks stay in cache and queue for a default time period. This has to adjusted and a sensible default has to be set. I have not changed the defaults.
+
 
 * In production, I will probably use Java or Go rather than python for this service. I have used Java and Go in the past for rest services, but have been doing python mostly recently and hence the choice.
 
