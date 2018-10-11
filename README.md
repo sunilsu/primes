@@ -27,5 +27,90 @@ Running on a windows machine, I had to connect to the container at a specific IP
 
 * In production, I will probably use Java or Go rather than python for this service. I have used Java and Go in the past for rest services, but have been doing python mostly recently and hence the choice.
 
+### Running the project
+This should be packaged better with bash scripts to run different parts, but I havent had time,
+* Conda environment file fe_env.yml should be used to install all the packages used.
+
+* Download the repo from github and within the root folder of this repo,
+
+```
+# Run redis docker container as mentioned above in a terminal
+docker run --name my-redis -p 6379:6379 -d redis
+
+# Start the flask app as below in a terminal
+export FLASK_APP=rest/app.py
+flask run
+
+# You will see the output below,
+ * Serving Flask app "rest.app"
+ * Forcing debug mode off
+ * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+
+# start redis task queue worker in another terminal
+export FLASK_APP=rest/app.py
+flask rq worker
+
+# you will see the following (or similar)
+11:55:02 RQ worker 'rq:worker:Laptop-Sunil.3081' started, version 0.12.0
+11:55:02 *** Listening on default...
+11:55:02 Cleaning registries for queue: default
+
+# Now send requests to the server with CURL
+
+curl -i -X POST 'localhost:5000/primes?start_num=4&end_num=11'
+
+# Response with status 200 and UUID below
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 39
+Server: Werkzeug/0.14.1 Python/3.7.0
+Date: Thu, 11 Oct 2018 16:58:05 GMT
+
+"a978649a-99c2-4f45-b927-3658678fd504"
+
+# Now query the status of the task
+
+curl -i -X GET 'localhost:5000/result/a978649a-99c2-4f45-b927-3658678fd504'
+
+# Response below with status 200 and result
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 13
+Server: Werkzeug/0.14.1 Python/3.7.0
+Date: Thu, 11 Oct 2018 17:00:12 GMT
+
+"[5, 7, 11]"
+
+# Sending the same request return the same id. This is a cache hit and avoids duplicating processing
+curl -i -X POST 'localhost:5000/primes?start_num=4&end_num=11'
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 39
+Server: Werkzeug/0.14.1 Python/3.7.0
+Date: Thu, 11 Oct 2018 17:02:03 GMT
+
+"a978649a-99c2-4f45-b927-3658678fd504"
+
+# Now starting a long running job, primes less than 1000000
+$ curl -i -X POST 'localhost:5000/primes?start_num=1&end_num=1000000'
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 39
+Server: Werkzeug/0.14.1 Python/3.7.0
+Date: Thu, 11 Oct 2018 17:04:00 GMT
+
+"e3aa241f-6ce6-4d19-961e-ae3525620b2a"
+
+# Response with status code 204, still processing
+curl -i -X GET 'localhost:5000/result/e3aa241f-6ce6-4d19-961e-ae3525620b2a'
+HTTP/1.0 204 NO CONTENT
+Content-Type: application/json
+Content-Length: 3
+Server: Werkzeug/0.14.1 Python/3.7.0
+Date: Thu, 11 Oct 2018 17:04:33 GMT
+
+```
+
+
 
 

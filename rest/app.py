@@ -4,35 +4,22 @@ Redis is used as backend for task queue and caching,
 using flask extensions for them
 """
 from flask import Flask, request, jsonify
-from flask_rq2 import RQ  # redis queue
-from flask_caching import Cache # caching
 from rq.job import Job
 from primes.primes import PrimesList
 from rest.invalid import InvalidUsage
+from rest.redis_mgr import init_cache, init_rq
+
 
 # url parameter names
 START_NUM = 'start_num'
 END_NUM = 'end_num'
 
-# Redis constants
-REDIS_HOST = '192.168.99.100'
-REDIS_PORT = '6379'
-REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}'
-
-
 # Flask app
 app = Flask('Prime')
-# redis host url
-app.config['RQ_REDIS_URL'] = REDIS_URL
-# redis task queue
-rq = RQ(app)
-# redis cache
-cache = Cache(app, config={'CACHE_TYPE': 'redis',
-                           'CACHE_KEY_PREFIX': 'prime',
-                           'CACHE_REDIS_HOST': REDIS_HOST,
-                           'CACHE_REDIS_PORT': REDIS_PORT,
-                           'CACHE_REDIS_URL': REDIS_URL
-                           })
+# initialize redis task queue
+rq = init_rq(app)
+# initialize redis cache
+cache = init_cache(app)
 
 
 @app.errorhandler(InvalidUsage)
